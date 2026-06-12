@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avis — CX Enterprise Journey</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f7f7f7;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: stretch;
+  }
+
+  .slide { display: flex; width: 100vw; height: 100vh; }
+
+  .left-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f7f7f7;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .right-panel {
+    flex: 0 0 22%;
+    background: #C8102E;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    position: relative;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 16px 8px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e5e5;
+    flex-shrink: 0;
+  }
+
+  .header img { height: 32px; width: auto; }
+
+  .header-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a1a1a;
+    letter-spacing: 0.3px;
+    margin-left: auto;
+  }
+
+  .header-sub {
+    font-size: 11px;
+    color: #666;
+    font-weight: 400;
+  }
+
+  /* Journey map */
+  .journey-map-container {
+    padding: 4px 16px 0;
+    flex-shrink: 0;
+    flex-grow: 0;
+    display: flex;
+    align-items: center;
+    transition: flex-grow 0.7s cubic-bezier(0.4, 0, 0.2, 1), padding 0.7s ease;
+  }
+
+  .journey-map-container.expanded {
+    flex-grow: 1;
+    padding: 16px 40px 20px;
+  }
+
+  .journey-map-container.expanded .journey-svg {
+    height: 100%;
+    width: 100%;
+  }
+
+  .journey-svg { width: 100%; height: auto; overflow: visible; }
+
+  /* Data panel */
+  .data-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border-top: 3px solid #C8102E;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 0 16px 10px;
+    border-radius: 0 0 6px 6px;
+    opacity: 1;
+    max-height: 2000px;
+    transform: translateY(0);
+    transition: opacity 0.65s ease,
+                max-height 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+                margin-bottom 0.75s ease,
+                transform 0.65s ease;
+  }
+
+  .data-panel.hidden {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(18px);
+    margin-bottom: 0;
+    border-top-width: 0;
+    pointer-events: none;
+  }
+
+  .data-panel-title {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: #1a1a1a;
+    padding: 8px 16px;
+    border-bottom: 2px solid #1a1a1a;
+    flex-shrink: 0;
+    background: #ffffff;
+  }
+
+  .data-grid {
+    display: flex;
+    min-height: fit-content;
+    border-top: none;
+  }
+
+  .data-col {
+    flex: 1;
+    padding: 8px 10px 6px;
+    border-right: 1px solid #eeeeee;
+    overflow-y: visible;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .data-col:last-child { border-right: none; }
+
+  .data-col-header {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #C8102E;
+    margin-bottom: 5px;
+    flex-shrink: 0;
+  }
+
+  .col-sub-header {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #C8102E;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+
+  /* Split column: Ingestion + Segments */
+  .col-ingestion-wrap {
+    display: grid;
+    grid-template-rows: minmax(80px, 1fr) minmax(80px, 1fr);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .col-half {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px 10px 4px;
+    min-height: 0;
+  }
+
+  .col-half:first-child { border-bottom: 1px solid #eeeeee; }
+  .col-half:last-child { padding-top: 28px; }
+
+  .data-item {
+    font-size: 10px;
+    color: #444;
+    line-height: 1.35;
+    padding: 2px 4px;
+    border-radius: 3px;
+    border-left: 2px solid transparent;
+  }
+
+  .data-item.active {
+    color: #1a1a1a;
+    background: rgba(80, 200, 120, 0.18);
+    border-left: 2px solid rgba(80, 200, 120, 0.7);
+    font-weight: 600;
+  }
+
+  .data-item.past { opacity: 0.38; }
+
+  .seg {
+    font-size: 10px;
+    color: #444;
+    line-height: 1.3;
+    padding: 2px 4px;
+    border-radius: 3px;
+    border-left: 2px solid transparent;
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .seg.active {
+    color: #1a1a1a;
+    background: rgba(80, 200, 120, 0.18);
+    border-left: 2px solid rgba(80, 200, 120, 0.7);
+    font-weight: 600;
+  }
+
+  .seg.past { opacity: 0.38; }
+
+  .seg-icon { font-size: 12px; flex-shrink: 0; line-height: 1.2; }
+
+  /* SVG journey */
+  .journey-base {
+    fill: none;
+    stroke: #ddd;
+    stroke-width: 2;
+  }
+
+  .journey-active {
+    fill: none;
+    stroke: #C8102E;
+    stroke-width: 3;
+    stroke-linecap: round;
+    opacity: 0;
+  }
+
+  .journey-active.visible {
+    opacity: 1;
+    transition: opacity 0.6s ease;
+  }
+
+  .node-circle {
+    fill: #fff;
+    stroke: #ccc;
+    stroke-width: 2;
+    transition: fill 0.3s, stroke 0.3s;
+    r: 13;
+  }
+
+  .node-active .node-circle {
+    fill: #C8102E;
+    stroke: #C8102E;
+    animation: nodePulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes nodePulse {
+    0%, 100% { filter: drop-shadow(0 0 0px rgba(0,0,0,0)); }
+    50%       { filter: drop-shadow(0 0 6px rgba(200,16,46,0.5)); }
+  }
+
+  .node-label {
+    font-size: 8.5px;
+    fill: #444;
+    text-anchor: middle;
+  }
+
+  .node-active .node-label { font-weight: 700; }
+
+  .node-emoji {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    line-height: 1;
+    user-select: none;
+  }
+
+  /* Right panel */
+  .slide-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.75;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  .slide-desc {
+    font-size: 13px;
+    line-height: 1.55;
+    flex-shrink: 0;
+    margin-bottom: 10px;
+  }
+
+  .persona-avatar { margin-top: 14px; flex-shrink: 0; }
+
+  .nav-dots {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 14px;
+    flex-shrink: 0;
+    max-width: 140px;
+  }
+
+  .nav-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .nav-dot.active {
+    background: #ffffff;
+    transform: scale(1.25);
+  }
+
+  .nav-arrow {
+    position: absolute;
+    bottom: 18px;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+
+  .nav-arrow:hover { background: rgba(255,255,255,0.28); }
+  .nav-arrow.prev { left: 14px; }
+  .nav-arrow.next { right: 14px; }
+</style>
+</head>
+<body>
+<div class="slide">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="header">
+      <img src="https://logo.clearbit.com/avis.com" alt="Avis"
+           onerror="this.style.display='none';document.getElementById('logo-fb').style.display='block'">
+      <span id="logo-fb" style="display:none; font-size:20px; font-weight:900; color:#C8102E;">Avis</span>
+      <span class="header-title">CX Enterprise</span>
+      <span class="header-sub">Car Rental Acquisition Journey</span>
+    </div>
+
+    <div class="journey-map-container" id="journey-map-container">
+      <svg class="journey-svg" viewBox="-20 -10 1040 230" id="journey-svg">
+        <!-- Base path -->
+        <path class="journey-base" d="M 25,168 C 55,168 85,65 113,65 C 141,65 172,158 200,158
+          C 228,158 260,58 288,58 C 316,58 348,168 376,168
+          C 404,168 436,62 464,62 C 492,62 524,158 552,158
+          C 580,158 612,55 640,55 C 668,55 698,165 726,165
+          C 754,165 786,52 814,52 C 842,52 872,168 900,168
+          C 922,168 958,70 982,70"/>
+        <!-- Active path -->
+        <path class="journey-active" id="active-seg" d=""/>
+
+        <!-- Node 0: cx=25, cy=168 bottom -->
+        <g class="node" id="node-0">
+          <circle class="node-circle" cx="25" cy="168"/>
+          <foreignObject x="12" y="155" width="26" height="26">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="node-emoji">🚗</div>
+          </foreignObject>
+          <text class="node-label" x="25" y="194">Rental</text>
+          <text class="node-label" x="25" y="204">Trigger</text>
+        </g>
+
+        <!-- Node 1: cx=113, cy=65 top -->
+        <g class="node" id="node-1">
+          <circle class="node-circle" cx="113" cy="65"/>
+          <foreignObject x="100" y="52" width="26" height="26">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="node-emoji">🔍</div>
+          </foreignObject>
+          <text class="node-label" x="113" y="29">Search &amp;</text>
+          <text class="node-label" x="113" y="39">Compare</text>
+        </g>
+
+        <!-- Node 2: cx=200, cy=158 bottom -->
+        <g class="node" id="node-2">
+          <circle class="node-circle" cx="200" cy="158"/>
+          <foreignObject x="187" y="145" width="26" height="26">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="node-emoji">🌐</div>
+          </foreignObject>
+          <text class="node-label" x="200" y="184">First Site</text>
+          <text class="node-label" x="200" y="194">Visit</text>
+        </g>
+
+        <!-- Node 3: cx=288, cy=58 top -->
+        <g class="node" id="node-3">
+          <circle class="node-circle" cx="288" cy="58"/>
+          <foreignObject x="275" y="45" width="26" height="26">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="node-emoji">🛒</div>
+          </foreignObject>
+          <text class="node-label" x="288" y="22">Fleet</text>
+          <text class="node-label" x="288" y="32">Browse</text>
+        </g>
+
+        <!-- Node 4: cx=376, cy=168 bottom -->
+        <g class="node" id="node-4">
+          <circle class="node-circle" cx="376" cy="168"/>
+          <foreignObject x="363" y="155" width="26" height="26">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="node-emoji">📋</div>
+          </foreignObject>
+          <text class="node-label" x="376" y="194">Quote &amp;</text>
+          <text class="node-label" x="376" y="204">Intent</text>
+        </g>
+
+        <!-- Node 5: cx=464, cy=62 top -->
+        <g class="node" id="node-5">
+          <circle class="node-circle" cx="464" cy="62"/>
+          <foreignObject x="451" y="49" width="26" height="26">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="node-emoji">⏸️</div>
+          </foreignObject>
+          <text class="node-label" x="464" y="26">Quote</text>
+          <text class="node-label" x="464" y="36">Abandon</text>
+        </g>
+
+        <!-- Node 6: cx=552, cy=158 bottom -->
+        <g class="node" id="node-6">
+          <circle class="node-circle" cx="552" cy="158"/>
+          <foreignObject x="539" y="145" width="26" height="26">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="node-emoji">🎯</div>
+          </foreignObject>
+          <text class="node-label" x="552" y="184">Paid</text>
+          <text class="node-label" x="552" y="194">Retargeting</text>
+        </g>
+
+        <!-- Node 7: cx=640, cy=55 top -->
+        <g class="node" id="node-7">
+          <circle class="node-circle" cx="640" cy="55"/>
+          <foreignObject x="627" y="42" width="26" height="26">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="node-emoji">🔐</div>
+          </foreignObject>
+          <text class="node-label" x="640" y="19">Return &amp;</text>
+          <text class="node-label" x="640" y="29">Login</text>
+        </g>
+
+        <!-- Node 8: cx=726, cy=165 bottom -->
+        <g class="node" id="node-8">
+          <circle class="node-circle" cx="726" cy="165"/>
+          <foreignObject x="713" y="152" width="26" height="26">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="node-emoji">💰</div>
+          </foreignObject>
+          <text class="node-label" x="726" y="191">Personalised</text>
+          <text class="node-label" x="726" y="201">Offer</text>
+        </g>
+
+        <!-- Node 9: cx=814, cy=52 top -->
+        <g class="node" id="node-9">
+          <circle class="node-circle" cx="814" cy="52"/>
+          <foreignObject x="801" y="39" width="26" height="26">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="node-emoji">💳</div>
+          </foreignObject>
+          <text class="node-label" x="814" y="16">Booking</text>
+          <text class="node-label" x="814" y="26">Start</text>
+        </g>
+
+        <!-- Node 10: cx=900, cy=168 bottom -->
+        <g class="node" id="node-10">
+          <circle class="node-circle" cx="900" cy="168"/>
+          <foreignObject x="887" y="155" width="26" height="26">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="node-emoji">☕</div>
+          </foreignObject>
+          <text class="node-label" x="900" y="194">Checkout</text>
+          <text class="node-label" x="900" y="204">Drop-off</text>
+        </g>
+
+        <!-- Node 11: cx=982, cy=70 top -->
+        <g class="node" id="node-11">
+          <circle class="node-circle" cx="982" cy="70"/>
+          <foreignObject x="969" y="57" width="26" height="26">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="node-emoji">✅</div>
+          </foreignObject>
+          <text class="node-label" x="982" y="34">Re-engage</text>
+          <text class="node-label" x="982" y="44">&amp; Book</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Data panel -->
+    <div class="data-panel" id="data-panel">
+      <div class="data-panel-title">CX Enterprise — Live Data View</div>
+      <div class="data-grid">
+
+        <!-- Col 1: Data Collected -->
+        <div class="data-col">
+          <div class="data-col-header">Data Collected</div>
+          <div id="col-data"></div>
+        </div>
+
+        <!-- Col 2: Data Ingestion + Segments -->
+        <div class="data-col col-ingestion-wrap" style="padding:0;">
+          <div class="col-half" style="padding: 8px 10px 4px;">
+            <div class="data-col-header">Data Ingestion</div>
+            <div id="col-ingestion"></div>
+          </div>
+          <div class="col-half" style="padding: 28px 10px 4px;">
+            <div class="col-sub-header">Segments</div>
+            <div id="col-segments"></div>
+          </div>
+        </div>
+
+        <!-- Col 3: Identities -->
+        <div class="data-col">
+          <div class="data-col-header">Identities</div>
+          <div id="col-identities"></div>
+        </div>
+
+        <!-- Col 4: Journey Orchestration (Foundation) -->
+        <div class="data-col" style="padding: 8px 10px 4px;">
+          <div class="data-col-header">Journey Orchestration</div>
+          <div id="col-orch"></div>
+        </div>
+
+        <!-- Col 5: Activation / Destinations (Foundation) -->
+        <div class="data-col" style="padding: 8px 10px 4px;">
+          <div class="data-col-header">Activation / Destinations</div>
+          <div id="col-activ"></div>
+        </div>
+
+        <!-- Col 6: Existing Avis Technology -->
+        <div class="data-col">
+          <div class="data-col-header">Existing Avis Technology</div>
+          <div id="col-tech"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div style="margin-bottom: 12px; flex-shrink: 0;">
+      <span style="font-family: Arial Black, Arial, sans-serif; font-weight: 900; font-size: 22px; color: #FA0F00; letter-spacing: -0.5px;">Adobe</span>
+    </div>
+
+    <div class="slide-label" id="slide-label">Overview</div>
+    <div class="slide-desc" id="slide-desc"></div>
+
+    <!-- Male persona avatar - James -->
+    <svg class="persona-avatar" width="90" height="90" viewBox="0 0 80 80">
+      <circle cx="40" cy="40" r="40" fill="#C8102E"/>
+      <ellipse cx="40" cy="72" rx="24" ry="14" fill="#2a2a2a"/>
+      <rect x="35" y="52" width="10" height="8" rx="2" fill="#e8c9a0"/>
+      <ellipse cx="40" cy="44" rx="16" ry="17" fill="#e8c9a0"/>
+      <ellipse cx="40" cy="29" rx="16" ry="7" fill="#3d2b1f"/>
+      <circle cx="34" cy="43" r="2.5" fill="#2a2a2a"/>
+      <circle cx="46" cy="43" r="2.5" fill="#2a2a2a"/>
+      <circle cx="35" cy="42" r="1" fill="white"/>
+      <circle cx="47" cy="42" r="1" fill="white"/>
+      <path d="M31 39 Q34 37 37 39" stroke="#3d2b1f" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      <path d="M43 39 Q46 37 49 39" stroke="#3d2b1f" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      <path d="M34 51 Q40 56 46 51" stroke="#c87941" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </svg>
+
+    <div class="nav-dots" id="nav-dots"></div>
+
+    <button class="nav-arrow prev" onclick="prevSlide()">&#8592;</button>
+    <button class="nav-arrow next" onclick="nextSlide()">&#8594;</button>
+  </div>
+</div>
+
+<script>
+const pathSegs = [
+  '',
+  'M 25,168 C 55,168 85,65 113,65',
+  'M 25,168 C 55,168 85,65 113,65 C 141,65 172,158 200,158',
+  'M 25,168 C 55,168 85,65 113,65 C 141,65 172,158 200,158 C 228,158 260,58 288,58',
+  'M 25,168 C 55,168 85,65 113,65 C 141,65 172,158 200,158 C 228,158 260,58 288,58 C 316,58 348,168 376,168',
+  'M 25,168 C 55,168 85,65 113,65 C 141,65 172,158 200,158 C 228,158 260,58 288,58 C 316,58 348,168 376,168 C 404,168 436,62 464,62',
+  'M 25,168 C 55,168 85,65 113,65 C 141,65 172,158 200,158 C 228,158 260,58 288,58 C 316,58 348,168 376,168 C 404,168 436,62 464,62 C 492,62 524,158 552,158',
+  'M 25,168 C 55,168 85,65 113,65 C 141,65 172,158 200,158 C 228,158 260,58 288,58 C 316,58 348,168 376,168 C 404,168 436,62 464,62 C 492,62 524,158 552,158 C 580,158 612,55 640,55',
+  'M 25,168 C 55,168 85,65 113,65 C 141,65 172,158 200,158 C 228,158 260,58 288,58 C 316,58 348,168 376,168 C 404,168 436,62 464,62 C 492,62 524,158 552,158 C 580,158 612,55 640,55 C 668,55 698,165 726,165',
+  'M 25,168 C 55,168 85,65 113,65 C 141,65 172,158 200,158 C 228,158 260,58 288,58 C 316,58 348,168 376,168 C 404,168 436,62 464,62 C 492,62 524,158 552,158 C 580,158 612,55 640,55 C 668,55 698,165 726,165 C 754,165 786,52 814,52',
+  'M 25,168 C 55,168 85,65 113,65 C 141,65 172,158 200,158 C 228,158 260,58 288,58 C 316,58 348,168 376,168 C 404,168 436,62 464,62 C 492,62 524,158 552,158 C 580,158 612,55 640,55 C 668,55 698,165 726,165 C 754,165 786,52 814,52 C 842,52 872,168 900,168',
+  'M 25,168 C 55,168 85,65 113,65 C 141,65 172,158 200,158 C 228,158 260,58 288,58 C 316,58 348,168 376,168 C 404,168 436,62 464,62 C 492,62 524,158 552,158 C 580,158 612,55 640,55 C 668,55 698,165 726,165 C 754,165 786,52 814,52 C 842,52 872,168 900,168 C 922,168 958,70 982,70',
+];
+
+const slides = [
+  {
+    label: 'Overview',
+    activeNode: -1,
+    desc: 'James is an Avis Preferred Gold member travelling to Edinburgh for a conference. This journey follows his rental search from first touch through quote abandonment, loyalty-driven re-engagement, and confirmed booking — powered by CX Enterprise.',
+    data: [], dataActive: [],
+    ingestion: [], ingestionActive: [],
+    segs: [], segActive: [],
+    ids: [],
+    orch: [], orchActive: [],
+    activ: [], activActive: [],
+    tech: [],
+  },
+  {
+    label: '01  Rental Trigger',
+    activeNode: 0,
+    desc: 'James needs a rental car for an Edinburgh conference. He recalls an Avis ad and begins searching on his phone. He is off the Avis domain — no data is captured yet.',
+    data: [], dataActive: [],
+    ingestion: [], ingestionActive: [],
+    segs: [], segActive: [],
+    ids: [],
+    orch: [], orchActive: [],
+    activ: [], activActive: [],
+    tech: [
+      {t: 'Google Ads', a: true},
+      {t: 'Meta Ads Manager', a: true},
+    ],
+  },
+  {
+    label: '02  Search & Compare',
+    activeNode: 1,
+    desc: 'James compares Avis, Hertz, and Enterprise via Google and comparison sites, reading reviews on pick-up convenience at Edinburgh Airport. He is off the Avis domain — no data captured.',
+    data: [], dataActive: [],
+    ingestion: [], ingestionActive: [],
+    segs: [], segActive: [],
+    ids: [],
+    orch: [], orchActive: [],
+    activ: [], activActive: [],
+    tech: [
+      {t: 'Google Ads', a: false},
+    ],
+  },
+  {
+    label: '03  First Site Visit',
+    activeNode: 2,
+    desc: 'James lands on avis.co.uk for the first time via a Google paid click. An ECID is assigned and his anonymous profile begins. He checks Edinburgh Airport availability and location details.',
+    data: [
+      'ECID assigned — avis.co.uk first load',
+      'UTM source: google / cpc',
+      'Page view: /car-rental/edinburgh-airport',
+      'Location interest: Edinburgh Airport',
+    ],
+    dataActive: [
+      'ECID assigned — avis.co.uk first load',
+      'UTM source: google / cpc',
+      'Page view: /car-rental/edinburgh-airport',
+      'Location interest: Edinburgh Airport',
+    ],
+    ingestion: [
+      'Web SDK → AEP ExperienceEvent',
+      'ECID assigned on first page load',
+      'Page view + UTM params streamed',
+    ],
+    ingestionActive: [
+      'Web SDK → AEP ExperienceEvent',
+      'ECID assigned on first page load',
+      'Page view + UTM params streamed',
+    ],
+    segs: [
+      {i: '🌐', l: 'Anonymous\nSite Visitor'},
+    ],
+    segActive: ['Anonymous\nSite Visitor'],
+    ids: [
+      ['ECID (anonymous)', true],
+    ],
+    orch: [], orchActive: [],
+    activ: [], activActive: [],
+    tech: [
+      {t: 'avis.co.uk', a: true},
+      {t: 'Google Tag Manager', a: true},
+      {t: 'Adobe Marketing Cloud', a: true},
+    ],
+  },
+  {
+    label: '04  Fleet Browse',
+    activeNode: 3,
+    desc: 'James filters by vehicle class, scrolls estate and SUV options, and views the Ford Mondeo Estate detail page. He reads the collision cover extras section. His product affinity sharpens.',
+    data: [
+      'ECID assigned — avis.co.uk first load',
+      'UTM source: google / cpc',
+      'Page view: /car-rental/edinburgh-airport',
+      'Location interest: Edinburgh Airport',
+      'Fleet filter applied: Estate / SUV',
+      'Product view: Ford Mondeo Estate',
+      'Extras page view: collision cover',
+    ],
+    dataActive: [
+      'Fleet filter applied: Estate / SUV',
+      'Product view: Ford Mondeo Estate',
+      'Extras page view: collision cover',
+    ],
+    ingestion: [
+      'Web SDK → AEP ExperienceEvent',
+      'ECID assigned on first page load',
+      'Page view + UTM params streamed',
+      'Fleet filter events streamed',
+      'Product detail view event',
+    ],
+    ingestionActive: [
+      'Fleet filter events streamed',
+      'Product detail view event',
+    ],
+    segs: [
+      {i: '🌐', l: 'Anonymous\nSite Visitor'},
+      {i: '🚗', l: 'Estate / SUV\nIntent'},
+    ],
+    segActive: ['Estate / SUV\nIntent'],
+    ids: [
+      ['ECID (anonymous)', false],
+    ],
+    orch: [], orchActive: [],
+    activ: [], activActive: [],
+    tech: [
+      {t: 'avis.co.uk', a: false},
+      {t: 'Google Tag Manager', a: false},
+      {t: 'Adobe Marketing Cloud', a: false},
+    ],
+  },
+  {
+    label: '05  Quote & Intent',
+    activeNode: 4,
+    desc: 'James reaches the quote summary — £189 for 3 days including collision cover. He pauses to compare against a competitor tab, then closes the Avis site without booking. CJA flags the exit.',
+    data: [
+      'ECID assigned — avis.co.uk first load',
+      'UTM source: google / cpc',
+      'Page view: /car-rental/edinburgh-airport',
+      'Location interest: Edinburgh Airport',
+      'Fleet filter applied: Estate / SUV',
+      'Product view: Ford Mondeo Estate',
+      'Extras page view: collision cover',
+      'Quote generated: £189 / 3 days',
+      'Pick-up: Edinburgh Airport, 14 July',
+      'Rental duration: 3 days',
+    ],
+    dataActive: [
+      'Quote generated: £189 / 3 days',
+      'Pick-up: Edinburgh Airport, 14 July',
+      'Rental duration: 3 days',
+    ],
+    ingestion: [
+      'Web SDK → AEP ExperienceEvent',
+      'ECID assigned on first page load',
+      'Page view + UTM params streamed',
+      'Fleet filter events streamed',
+      'Product detail view event',
+      'Quote generated event streamed',
+      'Rental dates + location captured',
+    ],
+    ingestionActive: [
+      'Quote generated event streamed',
+      'Rental dates + location captured',
+    ],
+    segs: [
+      {i: '🌐', l: 'Anonymous\nSite Visitor'},
+      {i: '🚗', l: 'Estate / SUV\nIntent'},
+      {i: '📋', l: 'High-Intent\nQuoter'},
+      {i: '📊', l: 'CJA: Quote\nAbandon Cohort'},
+    ],
+    segActive: ['High-Intent\nQuoter', 'CJA: Quote\nAbandon Cohort'],
+    ids: [
+      ['ECID (anonymous)', false],
+    ],
+    orch: [], orchActive: [],
+    activ: [], activActive: [],
+    tech: [
+      {t: 'avis.co.uk', a: false},
+      {t: 'Google Tag Manager', a: false},
+      {t: 'Adobe Marketing Cloud', a: false},
+      {t: 'Avis Preferred booking engine', a: true},
+    ],
+  },
+  {
+    label: '06  Abandonment',
+    activeNode: 5,
+    desc: 'James exits the site without booking. CDP registers the quote abandonment signal and prepares the retargeting audience. The High-Intent Quoter segment is activated to Meta and Google for retargeting.',
+    data: [
+      'ECID assigned — avis.co.uk first load',
+      'UTM source: google / cpc',
+      'Page view: /car-rental/edinburgh-airport',
+      'Location interest: Edinburgh Airport',
+      'Fleet filter applied: Estate / SUV',
+      'Product view: Ford Mondeo Estate',
+      'Extras page view: collision cover',
+      'Quote generated: £189 / 3 days',
+      'Pick-up: Edinburgh Airport, 14 July',
+      'Rental duration: 3 days',
+      'Abandonment signal: quote page exit',
+    ],
+    dataActive: [
+      'Abandonment signal: quote page exit',
+    ],
+    ingestion: [
+      'Web SDK → AEP ExperienceEvent',
+      'ECID assigned on first page load',
+      'Page view + UTM params streamed',
+      'Fleet filter events streamed',
+      'Product detail view event',
+      'Quote generated event streamed',
+      'Rental dates + location captured',
+      'Quote exit event streamed to CDP',
+    ],
+    ingestionActive: [
+      'Quote exit event streamed to CDP',
+    ],
+    segs: [
+      {i: '🌐', l: 'Anonymous\nSite Visitor'},
+      {i: '🚗', l: 'Estate / SUV\nIntent'},
+      {i: '📋', l: 'High-Intent\nQuoter'},
+      {i: '📊', l: 'CJA: Quote\nAbandon Cohort'},
+      {i: '⏸️', l: 'Quote\nAbandoner'},
+    ],
+    segActive: ['Quote\nAbandoner'],
+    ids: [
+      ['ECID (anonymous)', false],
+    ],
+    orch: [], orchActive: [],
+    activ: [
+      'CDP → Meta Custom Audience: Quote Abandoner',
+      'CDP → Google Ads RLSA: Quote Abandoner',
+    ],
+    activActive: [],
+    tech: [
+      {t: 'avis.co.uk', a: false},
+      {t: 'Google Tag Manager', a: false},
+      {t: 'Adobe Marketing Cloud', a: false},
+    ],
+  },
+  {
+    label: '07  Retargeting',
+    activeNode: 6,
+    desc: 'James sees an Avis display ad on LinkedIn featuring the exact estate car class he viewed. CDP has activated the Quote Abandoner segment to Meta and Google — retargeting ads are live.',
+    data: [
+      'ECID assigned — avis.co.uk first load',
+      'UTM source: google / cpc',
+      'Page view: /car-rental/edinburgh-airport',
+      'Location interest: Edinburgh Airport',
+      'Fleet filter applied: Estate / SUV',
+      'Product view: Ford Mondeo Estate',
+      'Extras page view: collision cover',
+      'Quote generated: £189 / 3 days',
+      'Pick-up: Edinburgh Airport, 14 July',
+      'Rental duration: 3 days',
+      'Abandonment signal: quote page exit',
+    ],
+    dataActive: [],
+    ingestion: [
+      'Web SDK → AEP ExperienceEvent',
+      'ECID assigned on first page load',
+      'Page view + UTM params streamed',
+      'Fleet filter events streamed',
+      'Product detail view event',
+      'Quote generated event streamed',
+      'Rental dates + location captured',
+      'Quote exit event streamed to CDP',
+    ],
+    ingestionActive: [],
+    segs: [
+      {i: '🌐', l: 'Anonymous\nSite Visitor'},
+      {i: '🚗', l: 'Estate / SUV\nIntent'},
+      {i: '📋', l: 'High-Intent\nQuoter'},
+      {i: '📊', l: 'CJA: Quote\nAbandon Cohort'},
+      {i: '⏸️', l: 'Quote\nAbandoner'},
+    ],
+    segActive: [],
+    ids: [
+      ['ECID (anonymous)', false],
+    ],
+    orch: [], orchActive: [],
+    activ: [
+      'CDP → Meta Custom Audience: Quote Abandoner',
+      'CDP → Google Ads RLSA: Quote Abandoner',
+    ],
+    activActive: [
+      'CDP → Meta Custom Audience: Quote Abandoner',
+      'CDP → Google Ads RLSA: Quote Abandoner',
+    ],
+    tech: [
+      {t: 'Meta Ads Manager', a: true},
+      {t: 'Google Display Network', a: true},
+    ],
+  },
+  {
+    label: '08  Return & Login',
+    activeNode: 7,
+    desc: 'James receives an AJO re-engagement email — "Your Edinburgh rental is still available." He clicks through and logs into his Avis Preferred account. ECID stitches to his known profile.',
+    data: [
+      'ECID assigned — avis.co.uk first load',
+      'UTM source: google / cpc',
+      'Page view: /car-rental/edinburgh-airport',
+      'Location interest: Edinburgh Airport',
+      'Fleet filter applied: Estate / SUV',
+      'Product view: Ford Mondeo Estate',
+      'Extras page view: collision cover',
+      'Quote generated: £189 / 3 days',
+      'Pick-up: Edinburgh Airport, 14 July',
+      'Rental duration: 3 days',
+      'Abandonment signal: quote page exit',
+      'Email: james.m@email.com',
+      'Avis Preferred ID: AVP-8823741',
+      'Loyalty tier: Gold',
+      'Past rentals: 7 (12 months)',
+      'Preferred class: Estate / SUV',
+      'Email click: re-engagement campaign',
+    ],
+    dataActive: [
+      'Email: james.m@email.com',
+      'Avis Preferred ID: AVP-8823741',
+      'Loyalty tier: Gold',
+      'Past rentals: 7 (12 months)',
+      'Preferred class: Estate / SUV',
+      'Email click: re-engagement campaign',
+    ],
+    ingestion: [
+      'Web SDK → AEP ExperienceEvent',
+      'ECID assigned on first page load',
+      'Page view + UTM params streamed',
+      'Fleet filter events streamed',
+      'Product detail view event',
+      'Quote generated event streamed',
+      'Rental dates + location captured',
+      'Quote exit event streamed to CDP',
+      'AJO email click event → ExperienceEvent',
+      'Login event: Preferred ID resolved',
+      'Avis CRM data merged into profile',
+    ],
+    ingestionActive: [
+      'AJO email click event → ExperienceEvent',
+      'Login event: Preferred ID resolved',
+      'Avis CRM data merged into profile',
+    ],
+    segs: [
+      {i: '🌐', l: 'Anonymous\nSite Visitor'},
+      {i: '🚗', l: 'Estate / SUV\nIntent'},
+      {i: '📋', l: 'High-Intent\nQuoter'},
+      {i: '📊', l: 'CJA: Quote\nAbandon Cohort'},
+      {i: '⏸️', l: 'Quote\nAbandoner'},
+      {i: '🎖️', l: 'Gold Loyalty\nMember'},
+      {i: '🔄', l: 'Return\nBooker'},
+    ],
+    segActive: ['Gold Loyalty\nMember', 'Return\nBooker'],
+    ids: [
+      ['ECID (anonymous)', false],
+      ['Email (james.m@email.com)', true],
+      ['Avis Preferred ID: AVP-8823741', true],
+    ],
+    orch: [
+      'AJO: Re-engagement email — saved quote recovery',
+    ],
+    orchActive: [
+      'AJO: Re-engagement email — saved quote recovery',
+    ],
+    activ: [
+      'CDP → Meta Custom Audience: Quote Abandoner',
+      'CDP → Google Ads RLSA: Quote Abandoner',
+    ],
+    activActive: [],
+    tech: [
+      {t: 'Campaign Monitor', a: true},
+      {t: 'Avis Preferred loyalty platform', a: true},
+      {t: 'Avis Budget Group CRM', a: true},
+    ],
+  },
+  {
+    label: '09  Personalised Offer',
+    activeNode: 8,
+    desc: 'James is recognised as a Gold loyalty member. AJO surfaces a 10% loyalty discount on the booking page. CJA insight shows Gold members who receive this offer convert at 2.3x the baseline rate.',
+    data: [
+      'ECID assigned — avis.co.uk first load',
+      'UTM source: google / cpc',
+      'Page view: /car-rental/edinburgh-airport',
+      'Location interest: Edinburgh Airport',
+      'Fleet filter applied: Estate / SUV',
+      'Product view: Ford Mondeo Estate',
+      'Extras page view: collision cover',
+      'Quote generated: £189 / 3 days',
+      'Pick-up: Edinburgh Airport, 14 July',
+      'Rental duration: 3 days',
+      'Abandonment signal: quote page exit',
+      'Email: james.m@email.com',
+      'Avis Preferred ID: AVP-8823741',
+      'Loyalty tier: Gold',
+      'Past rentals: 7 (12 months)',
+      'Preferred class: Estate / SUV',
+      'Email click: re-engagement campaign',
+      'Loyalty discount offered: 10%',
+      'Discounted price: £170.10',
+    ],
+    dataActive: [
+      'Loyalty discount offered: 10%',
+      'Discounted price: £170.10',
+    ],
+    ingestion: [
+      'Web SDK → AEP ExperienceEvent',
+      'ECID assigned on first page load',
+      'Page view + UTM params streamed',
+      'Fleet filter events streamed',
+      'Product detail view event',
+      'Quote generated event streamed',
+      'Rental dates + location captured',
+      'Quote exit event streamed to CDP',
+      'AJO email click event → ExperienceEvent',
+      'Login event: Preferred ID resolved',
+      'Avis CRM data merged into profile',
+      'Offer presentation event streamed',
+    ],
+    ingestionActive: [
+      'Offer presentation event streamed',
+    ],
+    segs: [
+      {i: '🌐', l: 'Anonymous\nSite Visitor'},
+      {i: '🚗', l: 'Estate / SUV\nIntent'},
+      {i: '📋', l: 'High-Intent\nQuoter'},
+      {i: '📊', l: 'CJA: Quote\nAbandon Cohort'},
+      {i: '⏸️', l: 'Quote\nAbandoner'},
+      {i: '🎖️', l: 'Gold Loyalty\nMember'},
+      {i: '🔄', l: 'Return\nBooker'},
+      {i: '💰', l: 'Loyalty Offer\nRecipient'},
+    ],
+    segActive: ['Loyalty Offer\nRecipient'],
+    ids: [
+      ['ECID (anonymous)', false],
+      ['Email (james.m@email.com)', false],
+      ['Avis Preferred ID: AVP-8823741', false],
+    ],
+    orch: [
+      'AJO: Re-engagement email — saved quote recovery',
+      'AJO: Loyalty offer journey — 10% discount surfaced on booking page',
+    ],
+    orchActive: [
+      'AJO: Loyalty offer journey — 10% discount surfaced on booking page',
+    ],
+    activ: [
+      'CDP → Meta Custom Audience: Quote Abandoner',
+      'CDP → Google Ads RLSA: Quote Abandoner',
+    ],
+    activActive: [],
+    tech: [
+      {t: 'Campaign Monitor', a: false},
+      {t: 'Avis Preferred loyalty platform', a: false},
+      {t: 'Avis Budget Group CRM', a: false},
+    ],
+  },
+  {
+    label: '10  Booking Start',
+    activeNode: 9,
+    desc: 'James accepts the offer and begins checkout. He enters payment details via Adyen and selects the Avis Preferred skip-counter pick-up. His booking is almost complete.',
+    data: [
+      'ECID assigned — avis.co.uk first load',
+      'UTM source: google / cpc',
+      'Page view: /car-rental/edinburgh-airport',
+      'Location interest: Edinburgh Airport',
+      'Fleet filter applied: Estate / SUV',
+      'Product view: Ford Mondeo Estate',
+      'Extras page view: collision cover',
+      'Quote generated: £189 / 3 days',
+      'Pick-up: Edinburgh Airport, 14 July',
+      'Rental duration: 3 days',
+      'Abandonment signal: quote page exit',
+      'Email: james.m@email.com',
+      'Avis Preferred ID: AVP-8823741',
+      'Loyalty tier: Gold',
+      'Past rentals: 7 (12 months)',
+      'Preferred class: Estate / SUV',
+      'Email click: re-engagement campaign',
+      'Loyalty discount offered: 10%',
+      'Discounted price: £170.10',
+      'Checkout started: payment details entered',
+      'Payment method: Visa (Adyen)',
+      'Skip-counter selected: Edinburgh Airport',
+    ],
+    dataActive: [
+      'Checkout started: payment details entered',
+      'Payment method: Visa (Adyen)',
+      'Skip-counter selected: Edinburgh Airport',
+    ],
+    ingestion: [
+      'Web SDK → AEP ExperienceEvent',
+      'ECID assigned on first page load',
+      'Page view + UTM params streamed',
+      'Fleet filter events streamed',
+      'Product detail view event',
+      'Quote generated event streamed',
+      'Rental dates + location captured',
+      'Quote exit event streamed to CDP',
+      'AJO email click event → ExperienceEvent',
+      'Login event: Preferred ID resolved',
+      'Avis CRM data merged into profile',
+      'Offer presentation event streamed',
+      'Checkout initiation event streamed',
+      'Payment method event streamed',
+    ],
+    ingestionActive: [
+      'Checkout initiation event streamed',
+      'Payment method event streamed',
+    ],
+    segs: [
+      {i: '🌐', l: 'Anonymous\nSite Visitor'},
+      {i: '🚗', l: 'Estate / SUV\nIntent'},
+      {i: '📋', l: 'High-Intent\nQuoter'},
+      {i: '📊', l: 'CJA: Quote\nAbandon Cohort'},
+      {i: '⏸️', l: 'Quote\nAbandoner'},
+      {i: '🎖️', l: 'Gold Loyalty\nMember'},
+      {i: '🔄', l: 'Return\nBooker'},
+      {i: '💰', l: 'Loyalty Offer\nRecipient'},
+      {i: '💳', l: 'Active\nCheckout'},
+    ],
+    segActive: ['Active\nCheckout'],
+    ids: [
+      ['ECID (anonymous)', false],
+      ['Email (james.m@email.com)', false],
+      ['Avis Preferred ID: AVP-8823741', false],
+    ],
+    orch: [
+      'AJO: Re-engagement email — saved quote recovery',
+      'AJO: Loyalty offer journey — 10% discount surfaced on booking page',
+    ],
+    orchActive: [],
+    activ: [
+      'CDP → Meta Custom Audience: Quote Abandoner',
+      'CDP → Google Ads RLSA: Quote Abandoner',
+    ],
+    activActive: [],
+    tech: [
+      {t: 'Adyen', a: true},
+      {t: 'Avis Preferred booking engine', a: true},
+    ],
+  },
+  {
+    label: '11  Checkout Drop-off',
+    activeNode: 10,
+    desc: 'A session timeout causes James to lose his partially completed booking. He doesn\'t return immediately. CJA identifies the checkout drop cohort and triggers the final re-engagement journey.',
+    data: [
+      'ECID assigned — avis.co.uk first load',
+      'UTM source: google / cpc',
+      'Page view: /car-rental/edinburgh-airport',
+      'Location interest: Edinburgh Airport',
+      'Fleet filter applied: Estate / SUV',
+      'Product view: Ford Mondeo Estate',
+      'Extras page view: collision cover',
+      'Quote generated: £189 / 3 days',
+      'Pick-up: Edinburgh Airport, 14 July',
+      'Rental duration: 3 days',
+      'Abandonment signal: quote page exit',
+      'Email: james.m@email.com',
+      'Avis Preferred ID: AVP-8823741',
+      'Loyalty tier: Gold',
+      'Past rentals: 7 (12 months)',
+      'Preferred class: Estate / SUV',
+      'Email click: re-engagement campaign',
+      'Loyalty discount offered: 10%',
+      'Discounted price: £170.10',
+      'Checkout started: payment details entered',
+      'Payment method: Visa (Adyen)',
+      'Skip-counter selected: Edinburgh Airport',
+      'Session timeout: checkout incomplete',
+    ],
+    dataActive: [
+      'Session timeout: checkout incomplete',
+    ],
+    ingestion: [
+      'Web SDK → AEP ExperienceEvent',
+      'ECID assigned on first page load',
+      'Page view + UTM params streamed',
+      'Fleet filter events streamed',
+      'Product detail view event',
+      'Quote generated event streamed',
+      'Rental dates + location captured',
+      'Quote exit event streamed to CDP',
+      'AJO email click event → ExperienceEvent',
+      'Login event: Preferred ID resolved',
+      'Avis CRM data merged into profile',
+      'Offer presentation event streamed',
+      'Checkout initiation event streamed',
+      'Payment method event streamed',
+      'Session timeout event streamed',
+    ],
+    ingestionActive: [
+      'Session timeout event streamed',
+    ],
+    segs: [
+      {i: '🌐', l: 'Anonymous\nSite Visitor'},
+      {i: '🚗', l: 'Estate / SUV\nIntent'},
+      {i: '📋', l: 'High-Intent\nQuoter'},
+      {i: '📊', l: 'CJA: Quote\nAbandon Cohort'},
+      {i: '⏸️', l: 'Quote\nAbandoner'},
+      {i: '🎖️', l: 'Gold Loyalty\nMember'},
+      {i: '🔄', l: 'Return\nBooker'},
+      {i: '💰', l: 'Loyalty Offer\nRecipient'},
+      {i: '💳', l: 'Active\nCheckout'},
+      {i: '📊', l: 'CJA: Checkout\nDrop Cohort'},
+    ],
+    segActive: ['CJA: Checkout\nDrop Cohort'],
+    ids: [
+      ['ECID (anonymous)', false],
+      ['Email (james.m@email.com)', false],
+      ['Avis Preferred ID: AVP-8823741', false],
+    ],
+    orch: [
+      'AJO: Re-engagement email — saved quote recovery',
+      'AJO: Loyalty offer journey — 10% discount surfaced on booking page',
+    ],
+    orchActive: [],
+    activ: [
+      'CDP → Meta Custom Audience: Quote Abandoner',
+      'CDP → Google Ads RLSA: Quote Abandoner',
+    ],
+    activActive: [],
+    tech: [
+      {t: 'Adyen', a: false},
+      {t: 'Avis Preferred booking engine', a: false},
+    ],
+  },
+  {
+    label: '12  Re-engage & Book',
+    activeNode: 11,
+    desc: 'James receives an AJO SMS 90 minutes later. He taps the link, completes the booking, and receives a confirmation. CJA closes the attribution loop across all 12 touchpoints — £170.10 revenue captured.',
+    data: [
+      'ECID assigned — avis.co.uk first load',
+      'UTM source: google / cpc',
+      'Page view: /car-rental/edinburgh-airport',
+      'Location interest: Edinburgh Airport',
+      'Fleet filter applied: Estate / SUV',
+      'Product view: Ford Mondeo Estate',
+      'Extras page view: collision cover',
+      'Quote generated: £189 / 3 days',
+      'Pick-up: Edinburgh Airport, 14 July',
+      'Rental duration: 3 days',
+      'Abandonment signal: quote page exit',
+      'Email: james.m@email.com',
+      'Avis Preferred ID: AVP-8823741',
+      'Loyalty tier: Gold',
+      'Past rentals: 7 (12 months)',
+      'Preferred class: Estate / SUV',
+      'Email click: re-engagement campaign',
+      'Loyalty discount offered: 10%',
+      'Discounted price: £170.10',
+      'Checkout started: payment details entered',
+      'Payment method: Visa (Adyen)',
+      'Skip-counter selected: Edinburgh Airport',
+      'Session timeout: checkout incomplete',
+      'SMS click: re-engagement campaign',
+      'Booking confirmed: B-2024-EDI-0091',
+      'Revenue: £170.10',
+    ],
+    dataActive: [
+      'SMS click: re-engagement campaign',
+      'Booking confirmed: B-2024-EDI-0091',
+      'Revenue: £170.10',
+    ],
+    ingestion: [
+      'Web SDK → AEP ExperienceEvent',
+      'ECID assigned on first page load',
+      'Page view + UTM params streamed',
+      'Fleet filter events streamed',
+      'Product detail view event',
+      'Quote generated event streamed',
+      'Rental dates + location captured',
+      'Quote exit event streamed to CDP',
+      'AJO email click event → ExperienceEvent',
+      'Login event: Preferred ID resolved',
+      'Avis CRM data merged into profile',
+      'Offer presentation event streamed',
+      'Checkout initiation event streamed',
+      'Payment method event streamed',
+      'Session timeout event streamed',
+      'AJO SMS click event → ExperienceEvent',
+      'Adyen payment confirmation → booking event',
+    ],
+    ingestionActive: [
+      'AJO SMS click event → ExperienceEvent',
+      'Adyen payment confirmation → booking event',
+    ],
+    segs: [
+      {i: '🌐', l: 'Anonymous\nSite Visitor'},
+      {i: '🚗', l: 'Estate / SUV\nIntent'},
+      {i: '📋', l: 'High-Intent\nQuoter'},
+      {i: '📊', l: 'CJA: Quote\nAbandon Cohort'},
+      {i: '⏸️', l: 'Quote\nAbandoner'},
+      {i: '🎖️', l: 'Gold Loyalty\nMember'},
+      {i: '🔄', l: 'Return\nBooker'},
+      {i: '💰', l: 'Loyalty Offer\nRecipient'},
+      {i: '💳', l: 'Active\nCheckout'},
+      {i: '📊', l: 'CJA: Checkout\nDrop Cohort'},
+      {i: '✅', l: 'Converted\nRenter'},
+      {i: '📈', l: 'CJA: 12-Touch\nAttribution'},
+    ],
+    segActive: ['Converted\nRenter', 'CJA: 12-Touch\nAttribution'],
+    ids: [
+      ['ECID (anonymous)', false],
+      ['Email (james.m@email.com)', false],
+      ['Avis Preferred ID: AVP-8823741', false],
+      ['Booking ID: B-2024-EDI-0091', true],
+    ],
+    orch: [
+      'AJO: Re-engagement email — saved quote recovery',
+      'AJO: Loyalty offer journey — 10% discount surfaced on booking page',
+      'AJO: SMS re-engagement — checkout completion nudge',
+      'AJO: Booking confirmation email triggered',
+    ],
+    orchActive: [
+      'AJO: SMS re-engagement — checkout completion nudge',
+      'AJO: Booking confirmation email triggered',
+    ],
+    activ: [
+      'CDP → Meta Custom Audience: Quote Abandoner',
+      'CDP → Google Ads RLSA: Quote Abandoner',
+    ],
+    activActive: [],
+    tech: [
+      {t: 'Adyen', a: true},
+      {t: 'Avis Preferred loyalty platform', a: true},
+      {t: 'Campaign Monitor', a: false},
+      {t: 'Adobe Marketing Cloud', a: true},
+      {t: 'Amazon Redshift', a: true},
+    ],
+  },
+];
+
+let current = 0;
+let overviewTimers = [];
+
+function clearOverviewTimers() {
+  overviewTimers.forEach(t => clearTimeout(t));
+  overviewTimers = [];
+}
+
+function resetNodes() {
+  for (let n = 0; n < 12; n++) {
+    document.getElementById('node-' + n).classList.remove('node-active');
+  }
+}
+
+function animateOverview() {
+  clearOverviewTimers();
+  resetNodes();
+
+  const seg = document.getElementById('active-seg');
+  seg.setAttribute('d', pathSegs[11]);
+  seg.style.transition = 'none';
+  seg.style.opacity = '1';
+  seg.classList.remove('visible');
+
+  const totalLength = seg.getTotalLength();
+  seg.style.strokeDasharray = totalLength + ' ' + totalLength;
+  seg.style.strokeDashoffset = totalLength;
+
+  seg.getBoundingClientRect();
+
+  const duration = 7000;
+  seg.style.transition = `stroke-dashoffset ${duration}ms cubic-bezier(0.35, 0, 0.45, 1)`;
+  seg.style.strokeDashoffset = '0';
+}
+
+function goTo(idx) {
+  clearOverviewTimers();
+  current = Math.max(0, Math.min(slides.length - 1, idx));
+
+  const seg = document.getElementById('active-seg');
+  seg.style.transition = 'none';
+  seg.style.strokeDasharray = '';
+  seg.style.strokeDashoffset = '';
+  seg.style.opacity = '';
+  seg.classList.remove('visible');
+  seg.removeAttribute('d');
+  resetNodes();
+
+  renderContent();
+
+  if (current === 0) animateOverview();
+}
+
+function nextSlide() { goTo(current + 1); }
+function prevSlide() { goTo(current - 1); }
+
+function renderContent() {
+  const s = slides[current];
+  const isOverview = current === 0;
+
+  const panel = document.querySelector('.data-panel');
+  if (isOverview) {
+    panel.classList.add('hidden');
+  } else {
+    panel.classList.remove('hidden');
+  }
+  document.querySelector('.journey-map-container').classList.toggle('expanded', isOverview);
+
+  document.getElementById('slide-label').textContent = s.label;
+  document.getElementById('slide-desc').textContent = s.desc;
+
+  const dotsEl = document.getElementById('nav-dots');
+  dotsEl.innerHTML = slides.map((_, i) =>
+    `<div class="nav-dot${i === current ? ' active' : ''}" onclick="goTo(${i})"></div>`
+  ).join('');
+
+  if (!isOverview) {
+    for (let n = 0; n < 12; n++) {
+      document.getElementById('node-' + n).classList.toggle('node-active', s.activeNode === n);
+    }
+    const seg = document.getElementById('active-seg');
+    const pi = s.activeNode;
+    if (s.activeNode >= 0 && pi > 0) {
+      seg.setAttribute('d', pathSegs[pi]);
+      seg.classList.add('visible');
+    } else {
+      seg.removeAttribute('d');
+      seg.classList.remove('visible');
+    }
+  }
+
+  function accumulate(field, activeField) {
+    const seen = new Map();
+    for (let i = 0; i <= current; i++) {
+      const items = slides[i][field] || [];
+      const active = slides[i][activeField] || [];
+      items.forEach(t => {
+        if (i === current && active.includes(t)) seen.set(t, 'active');
+        else if (!seen.has(t)) seen.set(t, 'past');
+      });
+    }
+    return seen;
+  }
+
+  const dataMap = accumulate('data', 'dataActive');
+  document.getElementById('col-data').innerHTML =
+    [...dataMap.entries()].map(([t, state]) =>
+      `<div class="data-item${state === 'active' ? ' active' : state === 'past' ? ' past' : ''}">${t}</div>`
+    ).join('');
+
+  const ingMap = accumulate('ingestion', 'ingestionActive');
+  document.getElementById('col-ingestion').innerHTML =
+    [...ingMap.entries()].map(([t, state]) =>
+      `<div class="data-item${state === 'active' ? ' active' : state === 'past' ? ' past' : ''}">${t}</div>`
+    ).join('');
+
+  function accumulateSegs() {
+    const seen = new Map();
+    for (let i = 0; i <= current; i++) {
+      const segs = slides[i].segs || [];
+      const active = slides[i].segActive || [];
+      segs.forEach(sg => {
+        if (i === current && active.includes(sg.l)) seen.set(sg.l, {i: sg.i, state: 'active'});
+        else if (!seen.has(sg.l)) seen.set(sg.l, {i: sg.i, state: 'past'});
+      });
+    }
+    return seen;
+  }
+  const segMap = accumulateSegs();
+  document.getElementById('col-segments').innerHTML =
+    [...segMap.entries()].map(([label, {i, state}]) =>
+      `<div class="seg${state === 'active' ? ' active' : state === 'past' ? ' past' : ''}">
+        <span class="seg-icon">${i}</span>
+        <span>${label.replace('\n', ' ')}</span>
+      </div>`
+    ).join('');
+
+  function accumulateIds() {
+    const seen = new Map();
+    for (let i = 0; i <= current; i++) {
+      (slides[i].ids || []).forEach(([label, active]) => {
+        if (i === current && active) seen.set(label, 'active');
+        else if (!seen.has(label)) seen.set(label, active ? 'active' : 'past');
+      });
+    }
+    return seen;
+  }
+  const idMap = accumulateIds();
+  document.getElementById('col-identities').innerHTML =
+    [...idMap.entries()].map(([label, state]) =>
+      `<div class="data-item${state === 'active' ? ' active' : state === 'past' ? ' past' : ''}">
+        <span style="font-weight:600">${label}</span>
+      </div>`
+    ).join('');
+
+  const orchMap = accumulate('orch', 'orchActive');
+  document.getElementById('col-orch').innerHTML =
+    [...orchMap.entries()].map(([t, state]) =>
+      `<div class="data-item${state === 'active' ? ' active' : state === 'past' ? ' past' : ''}">${t}</div>`
+    ).join('');
+
+  const activMap = accumulate('activ', 'activActive');
+  document.getElementById('col-activ').innerHTML =
+    [...activMap.entries()].map(([t, state]) =>
+      `<div class="data-item${state === 'active' ? ' active' : state === 'past' ? ' past' : ''}">${t}</div>`
+    ).join('');
+
+  function accumulateTech() {
+    const seen = new Map();
+    for (let i = 0; i <= current; i++) {
+      (slides[i].tech || []).forEach(({ t, a }) => {
+        if (i === current && a) seen.set(t, 'active');
+        else if (!seen.has(t)) seen.set(t, 'past');
+      });
+    }
+    return seen;
+  }
+  const techMap = accumulateTech();
+  document.getElementById('col-tech').innerHTML =
+    [...techMap.entries()].map(([t, state]) =>
+      `<div class="data-item${state === 'active' ? ' active' : state === 'past' ? ' past' : ''}">${t}</div>`
+    ).join('');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') nextSlide();
+  if (e.key === 'ArrowLeft')  prevSlide();
+});
+
+renderContent();
+animateOverview();
+</script>
+</body>
+</html>
